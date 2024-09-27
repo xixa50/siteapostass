@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registo de Apostas</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1e1e1e;
+            color: #dcdcdc;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        h1 {
+            color: #f1f1f1;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            background-color: #2c2c2c;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 800px;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        label, .stat-item {
+            font-weight: bold;
+            color: #f1f1f1;
+        }
+
+        input, select, button {
+            padding: 8px;
+            margin: 8px 0;
+            width: 100%;
+            border-radius: 4px;
+            border: 1px solid #333;
+            font-size: 14px;
+            background-color: #292929;
+            color: #f1f1f1;
+        }
+
+        button {
+            background-color: #17a2b8;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 12px;
+            padding: 5px 10px;
+        }
+
+        button:hover {
+            background-color: #138496;
+        }
+
+        .delete-btn, .result-btn {
+            padding: 5px 8px;
+            font-size: 12px;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+        }
+
+        .result-btn {
+            background-color: #28a745;
+        }
+
+        .table-container, .chart-container {
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #666;
+        }
+
+        th {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        /* Linhas mais finas na tabela */
+        td, th {
+            padding: 5px; /* Reduzi o padding para deixar as filas menores */
+        }
+
+        /* Classes para alterar a cor da linha na tabela */
+        .bet-win {
+            background-color: rgba(40, 167, 69, 0.2); /* Verde */
+        }
+
+        .bet-loss {
+            background-color: rgba(220, 53, 69, 0.2); /* Vermelho */
+        }
+
+        .chart-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .stat-container {
+            background-color: #2c2c2c;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .stats-table th, .stats-table td {
+            padding: 10px;
+            border: 1px solid #666;
+            color: #f1f1f1;
+        }
+
+        .stats-table th {
+            background-color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Registo de Apostas</h1>
+
+    <div class="container">
+        <div class="form-container">
+            <h3>Adicionar Aposta</h3>
+            <form id="betForm">
+                <label for="betValue">Valor Apostado (€):</label>
+                <input type="number" id="betValue" step="0.01" placeholder="Ex: 50" required>
+                
+                <label for="odd">Odd:</label>
+                <input type="number" id="odd" step="0.01" placeholder="Ex: 2.50" required>
+
+                <button type="submit">Adicionar Aposta</button>
+            </form>
+        </div>
+
+        <div class="table-container">
+            <h3>Histórico de Apostas</h3>
+            <table id="betsTable">
+                <thead>
+                    <tr>
+                        <th>Valor Apostado (€)</th>
+                        <th>Odd</th>
+                        <th>Possíveis Ganhos (€)</th>
+                        <th>Resultado</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Apostas aqui -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="container chart-container">
+        <h3>Evolução do Saldo</h3>
+        <canvas id="balanceChart"></canvas>
+    </div>
+
+    <div class="stat-container">
+        <h3>Estatísticas</h3>
+        <div class="stat-item">
+            <span>Total Apostado:</span> <span id="totalBet">0.00€</span>
+        </div>
+        <div class="stat-item">
+            <span>Total Ganho:</span> <span id="totalWon">0.00€</span>
+        </div>
+        <div class="stat-item">
+            <span>Total Perdido:</span> <span id="totalLost">0.00€</span>
+        </div>
+        <div class="stat-item">
+            <span>Balanço (Ganho - Apostado):</span> <span id="totalBalance">0.00€</span>
+        </div>
+    </div>
+
+    <div class="container stat-container">
+        <h3>Estatísticas Semanais e Mensais</h3>
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>Período</th>
+                    <th>Total Apostado</th>
+                    <th>Total Ganho</th>
+                    <th>Total Perdido</th>
+                    <th>Balanço (€)</th>
+                </tr>
+            </thead>
+            <tbody id="weeklyMonthlyStats">
+                <!-- Dados a serem inseridos -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const betForm = document.getElementById('betForm');
+        const betsTable = document.querySelector('#betsTable tbody');
+        const balanceChart = document.getElementById('balanceChart').getContext('2d');
+
+        let balanceData = [0];  // Inicialmente o saldo é 0
+        let chartLabels = ['Início'];  // Rótulos do gráfico
+        let bets = [];  // Array para armazenar as apostas
+
+        // Estatísticas
+        let totalBet = 0;
+        let totalWon = 0;
+        let totalLost = 0;
+        let totalBalance = 0; // Ganho - Apostado
+
+        const myChart = new Chart(balanceChart, {
+            type: 'line', // Gráfico de linha
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Saldo (€)',
+                    data: balanceData,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Função para adicionar aposta à tabela e calcular os possíveis ganhos
+        betForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const betValue = parseFloat(document.getElementById('betValue').value);
+            const odd = parseFloat(document.getElementById('odd').value);
+            const possibleWin = (betValue * odd).toFixed(2);
+            
+            const newBet = {
+                betValue: betValue,
+                odd: odd,
+                possibleWin: possibleWin,
+                result: null,
+                resultChanged: false
+            };
+
+            bets.push(newBet);
+            totalBet += betValue;
+
+            refreshTable();
+            updateStats();
+            updateBalance(bets.length - 1, 0);
+            betForm.reset();
+        });
+
+        function addBetToTable(bet, index) {
+            const row = betsTable.insertRow();
+
+            row.insertCell(0).textContent = bet.betValue.toFixed(2);
+            row.insertCell(1).textContent = bet.odd.toFixed(2);
+            row.insertCell(2).textContent = bet.possibleWin;
+
+            const resultCell = row.insertCell(3);
+            resultCell.textContent = bet.result ? bet.result : 'Pendente';
+
+            const actionsCell = row.insertCell(4);
+            const winButton = document.createElement('button');
+            winButton.textContent = 'Vitória';
+            winButton.classList.add('result-btn');
+            winButton.onclick = () => setResult(index, 'win');
+            actionsCell.appendChild(winButton);
+
+            const lossButton = document.createElement('button');
+            lossButton.textContent = 'Derrota';
+            lossButton.classList.add('result-btn', 'loss');
+            lossButton.onclick = () => setResult(index, 'loss');
+            actionsCell.appendChild(lossButton);
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Apagar';
+            deleteButton.classList.add('delete-btn');
+            deleteButton.onclick = () => deleteBet(index);
+            actionsCell.appendChild(deleteButton);
+
+            if (bet.result === 'Vitória') {
+                row.classList.add('bet-win');
+            } else if (bet.result === 'Derrota') {
+                row.classList.add('bet-loss');
+            }
+        }
+
+        function setResult(index, result) {
+            let bet = bets[index];
+
+            if (bet.resultChanged) {
+                if (bet.result === 'Vitória') {
+                    totalWon -= parseFloat(bet.possibleWin);
+                } else if (bet.result === 'Derrota') {
+                    totalLost -= bet.betValue;
+                }
+            }
+
+            bet.result = result === 'win' ? 'Vitória' : 'Derrota';
+            bet.resultChanged = true;
+
+            if (result === 'win') {
+                totalWon += parseFloat(bet.possibleWin);
+                updateBalance(index, bet.possibleWin - bet.betValue);
+            } else {
+                totalLost += bet.betValue;
+                updateBalance(index, -bet.betValue);
+            }
+
+            updateStats();
+            refreshTable();
+        }
+
+        function deleteBet(index) {
+            let bet = bets[index];
+
+            totalBet -= bet.betValue;
+            if (bet.result === 'Vitória') {
+                totalWon -= parseFloat(bet.possibleWin);
+                updateBalance(index, -(bet.possibleWin - bet.betValue));
+            } else if (bet.result === 'Derrota') {
+                totalLost -= bet.betValue;
+                updateBalance(index, bet.betValue);
+            }
+
+            bets.splice(index, 1);
+            refreshTable();
+            updateStats();
+        }
+
+        function updateBalance(index, amount) {
+            balanceData[index + 1] = balanceData[index] + amount;
+
+            chartLabels.push(`Aposta ${index + 1}`);
+            myChart.update();
+        }
+
+        function updateStats() {
+            totalBalance = totalWon - totalBet; // Balanço entre ganho e apostado
+
+            document.getElementById('totalBet').textContent = totalBet.toFixed(2) + '€';
+            document.getElementById('totalWon').textContent = totalWon.toFixed(2) + '€';
+            document.getElementById('totalLost').textContent = totalLost.toFixed(2) + '€';
+            document.getElementById('totalBalance').textContent = totalBalance.toFixed(2) + '€';
+
+            updateWeeklyMonthlyStats();
+        }
+
+        function updateWeeklyMonthlyStats() {
+            const weeklyStats = { totalBet: 0, totalWon: 0, totalLost: 0, totalBalance: 0 };
+            const monthlyStats = { totalBet: 0, totalWon: 0, totalLost: 0, totalBalance: 0 };
+
+            bets.forEach(bet => {
+                weeklyStats.totalBet += bet.betValue;
+                monthlyStats.totalBet += bet.betValue;
+
+                if (bet.result === 'Vitória') {
+                    weeklyStats.totalWon += parseFloat(bet.possibleWin);
+                    monthlyStats.totalWon += parseFloat(bet.possibleWin);
+                } else if (bet.result === 'Derrota') {
+                    weeklyStats.totalLost += bet.betValue;
+                    monthlyStats.totalLost += bet.betValue;
+                }
+            });
+
+            weeklyStats.totalBalance = weeklyStats.totalWon - weeklyStats.totalBet;
+            monthlyStats.totalBalance = monthlyStats.totalWon - monthlyStats.totalBet;
+
+            const weeklyMonthlyStats = document.getElementById('weeklyMonthlyStats');
+            weeklyMonthlyStats.innerHTML = `
+                <tr>
+                    <td>Esta Semana</td>
+                    <td>${weeklyStats.totalBet.toFixed(2)}€</td>
+                    <td>${weeklyStats.totalWon.toFixed(2)}€</td>
+                    <td>${weeklyStats.totalLost.toFixed(2)}€</td>
+                    <td>${weeklyStats.totalBalance.toFixed(2)}€</td>
+                </tr>
+                <tr>
+                    <td>Este Mês</td>
+                    <td>${monthlyStats.totalBet.toFixed(2)}€</td>
+                    <td>${monthlyStats.totalWon.toFixed(2)}€</td>
+                    <td>${monthlyStats.totalLost.toFixed(2)}€</td>
+                    <td>${monthlyStats.totalBalance.toFixed(2)}€</td>
+                </tr>
+            `;
+        }
+
+        function refreshTable() {
+            betsTable.innerHTML = '';
+            bets.forEach((bet, index) => addBetToTable(bet, index));
+        }
+    </script>
+</body>
+</html>
